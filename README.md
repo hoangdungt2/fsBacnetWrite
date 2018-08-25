@@ -21,3 +21,10 @@ To build:
 dotnet restore
 dotnet build
 ```
+
+## Discovery TimeOut
+The default time for WhoIs process to discover devices on the system is 1s. On the system with many devices, it might be needed to increase this time so that all the devices are listed. This can be done by ```--timeout``` argument.
+For example, to use 2s for timeout the command is
+```
+fsBacnetWrite.exe --bacnetip 10.2.22.2 --timeout 2.0
+```
