@@ -1,0 +1,11 @@
+C:\Users\kaer\OneDrive\Learn\F#\fsBacnetWrite\bin\Release\netcoreapp2.0\win-x86\hostpolicy.dll
+C:\Users\kaer\OneDrive\Learn\F#\fsBacnetWrite\bin\Release\netcoreapp2.0\win-x86\hostfxr.dll
+C:\Users\kaer\OneDrive\Learn\F#\fsBacnetWrite\bin\Release\netcoreapp2.0\win-x86\fsBacnetWrite.exe
+C:\Users\kaer\OneDrive\Learn\F#\fsBacnetWrite\bin\Release\netcoreapp2.0\win-x86\fsBacnetWrite.deps.json
+C:\Users\kaer\OneDrive\Learn\F#\fsBacnetWrite\bin\Release\netcoreapp2.0\win-x86\fsBacnetWrite.runtimeconfig.json
+C:\Users\kaer\OneDrive\Learn\F#\fsBacnetWrite\bin\Release\netcoreapp2.0\win-x86\fsBacnetWrite.runtimeconfig.dev.json
+C:\Users\kaer\OneDrive\Learn\F#\fsBacnetWrite\bin\Release\netcoreapp2.0\win-x86\fsBacnetWrite.dll
+C:\Users\kaer\OneDrive\Learn\F#\fsBacnetWrite\bin\Release\netcoreapp2.0\win-x86\fsBacnetWrite.pdb
+C:\Users\kaer\OneDrive\Learn\F#\fsBacnetWrite\obj\Release\netcoreapp2.0\win-x86\fsBacnetWrite.fsprojAssemblyReference.cache
+C:\Users\kaer\OneDrive\Learn\F#\fsBacnetWrite\obj\Release\netcoreapp2.0\win-x86\fsBacnetWrite.dll
+C:\Users\kaer\OneDrive\Learn\F#\fsBacnetWrite\obj\Release\netcoreapp2.0\win-x86\fsBacnetWrite.pdb
