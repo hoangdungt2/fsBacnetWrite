@@ -45,15 +45,18 @@ with
             | Value _ -> "value to write, blank is null"
             | Filepath _ -> "Excel file"
             | WritePriority _ -> "BACnet write priority, default is 8"
-            | Timeout _ -> "Timeout in seconds, default is 1s"
+            | Timeout _ -> "Timeout in seconds, default is 2s"
 let parser = ArgumentParser.Create<CLIArguments>(programName = "fsBacnetWrite.exe")
 
 // BACNET
 let mutable devList = Map.empty<string,BacnetAddress>
 let handlerOnIam (sender:BacnetClient) (adr:BacnetAddress) deviceId maxApdu (segmentation:BacnetSegmentations) vendorId =
-    printfn " adding %d to devList" deviceId
-    //addDevToList adr deviceId
-    devList <- devList.Add(deviceId.ToString(), adr) 
+    match devList.TryFind (deviceId.ToString()) with
+    | None ->
+        printfn "[handlerOnIam]: adding %d to devList" deviceId    
+        //addDevToList adr deviceId
+        devList <- devList.Add(deviceId.ToString(), adr) 
+    | _ -> ()
     ()
 
 let default_bacnet_ip = ""
@@ -71,7 +74,7 @@ let main argv =
         match argVal with 
         | "" -> BacnetValue( BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL, None )
         | _  -> BacnetValue( BacnetApplicationTags.BACNET_APPLICATION_TAG_REAL, System.Convert.ToSingle argVal )
-    let bacnetTimeout = argList.GetResult( Timeout, 1.0 ) * 1000.0
+    let bacnetTimeout = argList.GetResult( Timeout, 2.0 ) * 1000.0
     let bacnetWP = argList.GetResult( WritePriority, 8 )
 
     // Create bacnet client and send whois
