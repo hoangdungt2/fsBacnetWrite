@@ -114,10 +114,10 @@ let main argv =
     let convertDataRow (x:Data.DataRow) =
         let xValToWrite = match x.["Value"].ToString() with
                           | "" -> BacnetValue( BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL, None )
-                          | _ ->  BacnetValue( BacnetApplicationTags.BACNET_APPLICATION_TAG_REAL, System.Convert.ToSingle argVal )
+                          | _ ->  BacnetValue( BacnetApplicationTags.BACNET_APPLICATION_TAG_REAL, System.Convert.ToSingle (x.["Value"].ToString()) )
         let xValDisp = match x.["Value"].ToString() with
-                          | "" -> "Null"
-                          | _ ->  x.["Value"].ToString()
+                          | "" -> printfn "parsing Null"; "Null"
+                          | _ ->  printfn "parsing `%s`" (x.["Value"].ToString()); x.["Value"].ToString()
         match devList.ContainsKey(x.["Device-instance"].ToString()) with
         | true -> let objtmp = 
                         match x.["Analog"].ToString().ToUpper() with
@@ -145,7 +145,7 @@ let main argv =
         | false ->
             printfn "Device %s is not online ...." x.DeviceID; None
         | _ ->
-            printf "Write %s to %s" argVal x.Name
+            printf "Write %s to %s" x.ValueDisp x.Name
             (devList.TryFind x.DeviceID) >>= (fun bdev -> 
                 x.BacnetObj >== (fun bobj ->
                     match (writeFunc bdev bobj x.ValToWrite) with
