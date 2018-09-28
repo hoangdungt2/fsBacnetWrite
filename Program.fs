@@ -4,6 +4,13 @@
 ///     jose.vu@kaer.com - 25-Aug-2018
 ///     the program to write a value to multiple Bacnet points (in different devices)
 /// ---------------------------------------------------------------------
+#if INTERACTIVE
+#r @"C:\Users\hoang\.nuget\packages\argu\5.1.0\lib\netstandard2.0\Argu.dll"
+#r @"C:\Users\hoang\.nuget\packages\exceldatareader\3.4.1\lib\netstandard2.0\ExcelDataReader.dll"
+#r @"C:\Users\hoang\.nuget\packages\exceldatareader.dataset\3.4.1\lib\netstandard2.0\ExcelDataReader.DataSet.dll"
+#r @"C:\Users\hoang\.nuget\packages\bacnet\1.0.13\lib\net40\bacnet.dll"
+#endif
+
 open System
 open Argu
 open System.IO.BACnet
@@ -24,10 +31,12 @@ let (>>=) x f = Option.bind f x
 
 type BACnetPoints =
     {
-        DeviceID  : string
-        BacnetObj : BacnetObjectOption<BacnetObjectId>
-        Name      : string
-        IsOnline  : bool
+        DeviceID   : string
+        BacnetObj  : BacnetObjectOption<BacnetObjectId>
+        Name       : string
+        IsOnline   : bool
+        ValToWrite : BacnetValue
+        ValueDisp  : string
     }     
 
 // for parsing purpose
@@ -86,30 +95,49 @@ let main argv =
     bacnetClient.WhoIs()
 
     // Read AV/AO points from Excel file
+#if INTERACTIVE
+    let filepath  = @"D:\tmp\OneDrive\Learn\F#\fsBacnetWrite\vavAO_list.xlsx"
+#endif     
     let filepath = argList.GetResult (Filepath, @"vavAO_list.xlsx")    
     let stream1  = IO.File.Open(filepath,IO.FileMode.Open, IO.FileAccess.Read)
     let reader = ExcelReaderFactory.CreateReader(stream1)
     let result = reader.AsDataSet( new ExcelDataSetConfiguration( ConfigureDataTable = fun (_:IExcelDataReader) -> ExcelDataTableConfiguration( UseHeaderRow = true) ))
     let df = result.Tables.[0] 
-
+    stream1.Dispose()
+    
     // wait some times for all devices to be discovered
     Async.Sleep( int bacnetTimeout )  |> Async.RunSynchronously //wait 1s
 
+    // let containValue = df.Columns.Contains("Value")  // check if excel has the Value columns
+    
     // read the Excel
-    let convertDataRow (x:Data.DataRow) = 
+    let convertDataRow (x:Data.DataRow) =
+        let xValToWrite = match x.["Value"].ToString() with
+                          | "" -> BacnetValue( BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL, None )
+                          | _ ->  BacnetValue( BacnetApplicationTags.BACNET_APPLICATION_TAG_REAL, System.Convert.ToSingle argVal )
+        let xValDisp = match x.["Value"].ToString() with
+                          | "" -> "Null"
+                          | _ ->  x.["Value"].ToString()
         match devList.ContainsKey(x.["Device-instance"].ToString()) with
         | true -> let objtmp = 
                         match x.["Analog"].ToString().ToUpper() with
                         | "AO" -> new BacnetObjectId(BacnetObjectTypes.OBJECT_ANALOG_OUTPUT, System.Convert.ToUInt32 x.["Object"])
-                        | _ -> new BacnetObjectId(BacnetObjectTypes.OBJECT_ANALOG_VALUE, System.Convert.ToUInt32 x.["Object"])
-                  { DeviceID = x.["Device-instance"].ToString(); BacnetObj = Success objtmp; Name = sprintf "Dev%s:%s%s" (x.["Device-instance"].ToString()) (x.["Analog"].ToString()) (x.["Object"].ToString()); IsOnline = true  }
-        | false -> { DeviceID = x.["Device-instance"].ToString(); BacnetObj = Failure "Device is not on the list"; Name=""; IsOnline=false }                    
+                        | "AV" -> new BacnetObjectId(BacnetObjectTypes.OBJECT_ANALOG_VALUE, System.Convert.ToUInt32 x.["Object"])
+                        | "BO" -> new BacnetObjectId(BacnetObjectTypes.OBJECT_BINARY_OUTPUT, System.Convert.ToUInt32 x.["Object"])
+                        | _ -> new BacnetObjectId(BacnetObjectTypes.OBJECT_ANALOG_VALUE, System.Convert.ToUInt32 x.["Object"])           
+                  { DeviceID = x.["Device-instance"].ToString(); BacnetObj = Success objtmp; 
+                    Name = sprintf "Dev%s:%s%s" (x.["Device-instance"].ToString()) (x.["Analog"].ToString()) (x.["Object"].ToString()); 
+                    IsOnline = true; ValToWrite = xValToWrite; ValueDisp = xValDisp  }
+        | false -> 
+                 { DeviceID = x.["Device-instance"].ToString(); 
+                    BacnetObj = Failure "Device is not on the list"; 
+                    Name=""; IsOnline=false; ValToWrite = valueToWrite ; ValueDisp = xValDisp  }      
     
     let pointlist = df.Rows |> Seq.cast<Data.DataRow> |> Seq.map convertDataRow |> Seq.toList
 
-    let writeFunc (x:BacnetAddress) (y:BacnetObjectId) =
+    let writeFunc (x:BacnetAddress) (y:BacnetObjectId) (value:BacnetValue) =
         try
-            bacnetClient.WritePropertyRequest( x, y, BacnetPropertyIds.PROP_PRESENT_VALUE, seq{yield valueToWrite} )
+            bacnetClient.WritePropertyRequest( x, y, BacnetPropertyIds.PROP_PRESENT_VALUE, seq{yield value} )
         with
         | _ -> false
     let writeToDevice (x:BACnetPoints) = 
@@ -117,12 +145,10 @@ let main argv =
         | false ->
             printfn "Device %s is not online ...." x.DeviceID; None
         | _ ->
-            match argVal with 
-            | "" -> printf "Write null to %s" x.Name
-            | _ -> printf "Write %s to %s" argVal x.Name
+            printf "Write %s to %s" argVal x.Name
             (devList.TryFind x.DeviceID) >>= (fun bdev -> 
                 x.BacnetObj >== (fun bobj ->
-                    match (writeFunc bdev bobj) with
+                    match (writeFunc bdev bobj x.ValToWrite) with
                     | true -> printfn " ... OK"; Some "write success"
                     | false -> printfn " ... Fail"; None
                 )  
