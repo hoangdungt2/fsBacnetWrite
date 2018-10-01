@@ -4,13 +4,6 @@
 ///     jose.vu@kaer.com - 25-Aug-2018
 ///     the program to write a value to multiple Bacnet points (in different devices)
 /// ---------------------------------------------------------------------
-#if INTERACTIVE
-#r @"C:\Users\hoang\.nuget\packages\argu\5.1.0\lib\netstandard2.0\Argu.dll"
-#r @"C:\Users\hoang\.nuget\packages\exceldatareader\3.4.1\lib\netstandard2.0\ExcelDataReader.dll"
-#r @"C:\Users\hoang\.nuget\packages\exceldatareader.dataset\3.4.1\lib\netstandard2.0\ExcelDataReader.DataSet.dll"
-#r @"C:\Users\hoang\.nuget\packages\bacnet\1.0.13\lib\net40\bacnet.dll"
-#endif
-
 open System
 open Argu
 open System.IO.BACnet
@@ -42,7 +35,6 @@ type BACnetPoints =
 // for parsing purpose
 type CLIArguments =
     | BacnetIP of string
-    | Value of string
     | Filepath of string
     | WritePriority of int      // write priority (default is 8)
     | Timeout of float          // timeout in bacnet whois
@@ -51,7 +43,6 @@ with
         member s.Usage =
             match s with
             | BacnetIP _ -> "ip for bacnet ip"
-            | Value _ -> "value to write, blank is null"
             | Filepath _ -> "Excel file"
             | WritePriority _ -> "BACnet write priority, default is 8"
             | Timeout _ -> "Timeout in seconds, default is 2s"
@@ -78,11 +69,6 @@ let main argv =
         match argList.GetResult (BacnetIP, default_bacnet_ip) with
         | "" -> failwith "Please ENTER bacnet ip as --bacnetip ipaddress"; ""
         | _ -> argList.GetResult (BacnetIP, default_bacnet_ip)
-    let argVal = argList.GetResult (Value, "")    
-    let valueToWrite = 
-        match argVal with 
-        | "" -> BacnetValue( BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL, None )
-        | _  -> BacnetValue( BacnetApplicationTags.BACNET_APPLICATION_TAG_REAL, System.Convert.ToSingle argVal )
     let bacnetTimeout = argList.GetResult( Timeout, 2.0 ) * 1000.0
     let bacnetWP = argList.GetResult( WritePriority, 8 )
 
@@ -131,7 +117,7 @@ let main argv =
         | false -> 
                  { DeviceID = x.["Device-instance"].ToString(); 
                     BacnetObj = Failure "Device is not on the list"; 
-                    Name=""; IsOnline=false; ValToWrite = valueToWrite ; ValueDisp = xValDisp  }      
+                    Name=""; IsOnline=false; ValToWrite = xValToWrite ; ValueDisp = xValDisp  }      
     
     let pointlist = df.Rows |> Seq.cast<Data.DataRow> |> Seq.map convertDataRow |> Seq.toList
 
