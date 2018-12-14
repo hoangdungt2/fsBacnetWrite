@@ -1,5 +1,4 @@
-﻿
-/// ---------------------------------------------------------------------
+﻿/// ---------------------------------------------------------------------
 /// fsBacnetWrite
 ///     jose.vu@kaer.com - 25-Aug-2018
 ///     the program to write a value to multiple Bacnet points (in different devices)
@@ -110,6 +109,7 @@ let main argv =
                         | "AO" -> new BacnetObjectId(BacnetObjectTypes.OBJECT_ANALOG_OUTPUT, System.Convert.ToUInt32 x.["Object"])
                         | "AV" -> new BacnetObjectId(BacnetObjectTypes.OBJECT_ANALOG_VALUE, System.Convert.ToUInt32 x.["Object"])
                         | "BO" -> new BacnetObjectId(BacnetObjectTypes.OBJECT_BINARY_OUTPUT, System.Convert.ToUInt32 x.["Object"])
+                        | "BV" -> new BacnetObjectId(BacnetObjectTypes.OBJECT_BINARY_VALUE, System.Convert.ToUInt32 x.["Object"])
                         | _ -> new BacnetObjectId(BacnetObjectTypes.OBJECT_ANALOG_VALUE, System.Convert.ToUInt32 x.["Object"])           
                   { DeviceID = x.["Device-instance"].ToString(); BacnetObj = Success objtmp; 
                     Name = sprintf "Dev%s:%s%s" (x.["Device-instance"].ToString()) (x.["Analog"].ToString()) (x.["Object"].ToString()); 
